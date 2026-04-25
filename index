@@ -1,0 +1,50 @@
+<div class="timer-container">
+  <div id="display" style="font-family: 'Bodoni Moda', serif; font-size: 55px; fill: black; text-align: center;">00:25</div>
+  
+  <div id="circles" style="display: flex; gap: 10px; justify-content: center; margin: 20px 0;">
+    <script>for(let i=0; i<7; i++) document.write('<div class="dot" style="width: 15px; height: 15px; border-radius: 50%; background: #ccc;"></div>');</script>
+  </div>
+
+  <div style="display: flex; gap: 15px; justify-content: center;">
+    <button onclick="startTimer()">Start</button>
+    <button onclick="pauseTimer()">Pause</button>
+    <button onclick="stopTimer()">Stop</button>
+  </div>
+</div>
+
+<script>
+  let timeLeft = 25 * 60;
+  let timerId = null;
+  let completedCircles = 0;
+
+  function updateDisplay() {
+    let m = Math.floor(timeLeft / 60);
+    let s = timeLeft % 60;
+    document.getElementById('display').innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+
+  function startTimer() {
+    if (timerId) return;
+    timerId = setInterval(() => {
+      timeLeft--;
+      updateDisplay();
+      if (timeLeft <= 0) {
+        clearInterval(timerId);
+        timerId = null;
+        completeCircle();
+      }
+    }, 1000);
+  }
+
+  function completeCircle() {
+    if (completedCircles < 7) {
+      document.querySelectorAll('.dot')[completedCircles].style.background = 'black';
+      completedCircles++;
+      timeLeft = 25 * 60; // ریست برای دوره بعد
+      updateDisplay();
+    }
+  }
+
+  function pauseTimer() { clearInterval(timerId); timerId = null; }
+  function stopTimer() { clearInterval(timerId); timerId = null; timeLeft = 25 * 60; updateDisplay(); }
+</script>
