@@ -39,13 +39,13 @@
 
   <script>
     const TOTAL = 25 * 60;
-    let remaining = TOTAL, interval = null, running = false, sessions = 0;
+    let remaining = TOTAL, interval = null, running = false;
 
-    // پیدا کردن دوشنبه فعلی برای ریست هفتگی
+    // تشخیص دوشنبه برای ریست هفتگی
     function getWeekId() {
       const d = new Date();
-      const day = d.getDay(); // 0 (Sun) to 6 (Sat)
-      const diff = d.getDate() - (day === 0 ? 6 : day - 1); // تنظیم روی دوشنبه
+      const day = d.getDay(); 
+      const diff = d.getDate() - (day === 0 ? 6 : day - 1); 
       d.setDate(diff);
       return d.toDateString(); 
     }
@@ -54,17 +54,17 @@
       const savedWeek = localStorage.getItem('weekId');
       const currentWeek = getWeekId();
       
+      // اگر هفته جدید است، ریست کن
       if (savedWeek !== currentWeek) {
-        sessions = 0;
         localStorage.setItem('weekId', currentWeek);
-        localStorage.setItem('sessions', 0);
-      } else {
-        sessions = parseInt(localStorage.getItem('sessions')) || 0;
+        localStorage.setItem('filledDays', JSON.stringify([]));
       }
       
-      for(let i=0; i<sessions; i++) {
-        document.getElementById('dot-'+i)?.classList.add('filled');
-      }
+      // پر کردن دایره‌های ذخیره شده
+      const filledDays = JSON.parse(localStorage.getItem('filledDays') || "[]");
+      filledDays.forEach(dayIndex => {
+        document.getElementById('dot-'+dayIndex)?.classList.add('filled');
+      });
     }
 
     function fmt(s) { 
@@ -79,11 +79,19 @@
         if(remaining <= 0){ 
           clearInterval(interval); 
           running = false; 
-          if(sessions < 7) {
-            document.getElementById('dot-'+sessions)?.classList.add('filled');
-            sessions++;
-            localStorage.setItem('sessions', sessions);
+          
+          // تعیین اندیس روز (Mon=0, Tue=1 ... Sun=6)
+          const d = new Date();
+          const today = (d.getDay() === 0 ? 6 : d.getDay() - 1);
+          
+          document.getElementById('dot-'+today)?.classList.add('filled');
+          
+          let filledDays = JSON.parse(localStorage.getItem('filledDays') || "[]");
+          if (!filledDays.includes(today)) {
+            filledDays.push(today);
+            localStorage.setItem('filledDays', JSON.stringify(filledDays));
           }
+
           remaining = TOTAL; 
           document.getElementById('display').textContent = fmt(remaining); 
           return; 
@@ -102,7 +110,7 @@
       document.getElementById('display').textContent = fmt(remaining); 
     }
 
-    init(); // اجرای اولیه برای لود شدن وضعیت هفته
+    init();
   </script>
 </body>
 </html>
