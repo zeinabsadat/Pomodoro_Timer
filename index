@@ -1,50 +1,58 @@
-<div class="timer-container">
-  <div id="display" style="font-family: 'Bodoni Moda', serif; font-size: 55px; fill: black; text-align: center;">00:25</div>
-  
-  <div id="circles" style="display: flex; gap: 10px; justify-content: center; margin: 20px 0;">
-    <script>for(let i=0; i<7; i++) document.write('<div class="dot" style="width: 15px; height: 15px; border-radius: 50%; background: #ccc;"></div>');</script>
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #F5F0E8; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: 'Bodoni Moda', serif; }
+    .container { display: flex; flex-direction: column; align-items: center; gap: 2rem; }
+    #display { font-size: 72px; color: #2C3B2A; letter-spacing: 4px; }
+    .buttons { display: flex; gap: 12px; }
+    button { font-family: 'Bodoni Moda', serif; font-size: 14px; padding: 8px 24px; border-radius: 8px; border: 0.5px solid #8A7A5A; background: transparent; color: #2C3B2A; cursor: pointer; }
+    button:hover { background: #E8E0CC; }
+    .dots-row { display: flex; gap: 16px; }
+    .dot-col { text-align: center; }
+    .day-label { font-size: 11px; color: #8A7A5A; margin-bottom: 6px; }
+    .dot { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid #8A7A5A; background: transparent; margin: 0 auto; transition: background 0.4s; }
+    .dot.filled { background: #2C3B2A; border-color: #2C3B2A; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="display">25:00</div>
+    <div class="buttons">
+      <button onclick="startTimer()">Start</button>
+      <button onclick="pauseTimer()">Pause</button>
+      <button onclick="stopTimer()">Stop</button>
+    </div>
+    <div class="dots-row">
+      <div class="dot-col"><div class="day-label">Mon</div><div class="dot" id="dot-0"></div></div>
+      <div class="dot-col"><div class="day-label">Tue</div><div class="dot" id="dot-1"></div></div>
+      <div class="dot-col"><div class="day-label">Wed</div><div class="dot" id="dot-2"></div></div>
+      <div class="dot-col"><div class="day-label">Thu</div><div class="dot" id="dot-3"></div></div>
+      <div class="dot-col"><div class="day-label">Fri</div><div class="dot" id="dot-4"></div></div>
+      <div class="dot-col"><div class="day-label">Sat</div><div class="dot" id="dot-5"></div></div>
+      <div class="dot-col"><div class="day-label">Sun</div><div class="dot" id="dot-6"></div></div>
+    </div>
   </div>
-
-  <div style="display: flex; gap: 15px; justify-content: center;">
-    <button onclick="startTimer()">Start</button>
-    <button onclick="pauseTimer()">Pause</button>
-    <button onclick="stopTimer()">Stop</button>
-  </div>
-</div>
-
-<script>
-  let timeLeft = 25 * 60;
-  let timerId = null;
-  let completedCircles = 0;
-
-  function updateDisplay() {
-    let m = Math.floor(timeLeft / 60);
-    let s = timeLeft % 60;
-    document.getElementById('display').innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  }
-
-  function startTimer() {
-    if (timerId) return;
-    timerId = setInterval(() => {
-      timeLeft--;
-      updateDisplay();
-      if (timeLeft <= 0) {
-        clearInterval(timerId);
-        timerId = null;
-        completeCircle();
-      }
-    }, 1000);
-  }
-
-  function completeCircle() {
-    if (completedCircles < 7) {
-      document.querySelectorAll('.dot')[completedCircles].style.background = 'black';
-      completedCircles++;
-      timeLeft = 25 * 60; // ریست برای دوره بعد
-      updateDisplay();
+  <script>
+    const TOTAL = 25 * 60;
+    let remaining = TOTAL, interval = null, running = false, sessions = 0;
+    function fmt(s) { const m = Math.floor(s/60), sec = s%60; return (m<10?'0':'')+m+':'+(sec<10?'0':'')+sec; }
+    function fillDot(i) { document.getElementById('dot-'+i)?.classList.add('filled'); }
+    function resetDots() { for(let i=0;i<7;i++) document.getElementById('dot-'+i)?.classList.remove('filled'); }
+    function startTimer() {
+      if(running) return; running = true;
+      interval = setInterval(()=>{
+        if(remaining<=0){ clearInterval(interval); running=false; if(sessions<7) fillDot(sessions); sessions++; remaining=TOTAL; document.getElementById('display').textContent=fmt(remaining); return; }
+        remaining--; document.getElementById('display').textContent=fmt(remaining);
+      },1000);
     }
-  }
-
-  function pauseTimer() { clearInterval(timerId); timerId = null; }
-  function stopTimer() { clearInterval(timerId); timerId = null; timeLeft = 25 * 60; updateDisplay(); }
-</script>
+    function pauseTimer() { if(!running) return; clearInterval(interval); running=false; }
+    function stopTimer() { clearInterval(interval); running=false; remaining=TOTAL; sessions=0; document.getElementById('display').textContent=fmt(remaining); resetDots(); }
+  </script>
+</body>
+</html>
+```
