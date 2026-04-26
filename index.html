@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <title>Pomodoro Timer</title>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -44,70 +45,90 @@
     // تشخیص دوشنبه برای ریست هفتگی
     function getWeekId() {
       const d = new Date();
-      const day = d.getDay(); 
-      const diff = d.getDate() - (day === 0 ? 6 : day - 1); 
+      const day = d.getDay();
+      const diff = d.getDate() - (day === 0 ? 6 : day - 1);
       d.setDate(diff);
-      return d.toDateString(); 
+      return d.toDateString();
     }
 
     function init() {
       const savedWeek = localStorage.getItem('weekId');
       const currentWeek = getWeekId();
-      
+
       // اگر هفته جدید است، ریست کن
       if (savedWeek !== currentWeek) {
         localStorage.setItem('weekId', currentWeek);
         localStorage.setItem('filledDays', JSON.stringify([]));
       }
-      
+
       // پر کردن دایره‌های ذخیره شده
       const filledDays = JSON.parse(localStorage.getItem('filledDays') || "[]");
       filledDays.forEach(dayIndex => {
-        document.getElementById('dot-'+dayIndex)?.classList.add('filled');
+        document.getElementById('dot-' + dayIndex)?.classList.add('filled');
       });
     }
 
-    function fmt(s) { 
-      const m = Math.floor(s/60), sec = s%60; 
-      return (m<10?'0':'')+m+':'+(sec<10?'0':'')+sec; 
+    function fmt(s) {
+      const m = Math.floor(s / 60), sec = s % 60;
+      return (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
     }
-    
+
+    function beep() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 1.2);
+      } catch (e) {}
+    }
+
     function startTimer() {
-      if(running) return; 
+      if (running) return;
+      // اگر تایمر به صفر رسیده، ابتدا ریست کن
+      if (remaining <= 0) {
+        remaining = TOTAL;
+        document.getElementById('display').textContent = fmt(remaining);
+      }
       running = true;
-      interval = setInterval(()=>{
-        if(remaining <= 0){ 
-          clearInterval(interval); 
-          running = false; 
-          
+      interval = setInterval(() => {
+        remaining--;
+        document.getElementById('display').textContent = fmt(remaining);
+        if (remaining <= 0) {
+          clearInterval(interval);
+          running = false;
+
           // تعیین اندیس روز (Mon=0, Tue=1 ... Sun=6)
           const d = new Date();
           const today = (d.getDay() === 0 ? 6 : d.getDay() - 1);
-          
-          document.getElementById('dot-'+today)?.classList.add('filled');
-          
+
+          document.getElementById('dot-' + today)?.classList.add('filled');
+
           let filledDays = JSON.parse(localStorage.getItem('filledDays') || "[]");
           if (!filledDays.includes(today)) {
             filledDays.push(today);
             localStorage.setItem('filledDays', JSON.stringify(filledDays));
           }
 
-          remaining = TOTAL; 
-          document.getElementById('display').textContent = fmt(remaining); 
-          return; 
+          // صدای اعلام پایان
+          beep();
         }
-        remaining--; 
-        document.getElementById('display').textContent = fmt(remaining);
       }, 1000);
     }
-    
+
     function pauseTimer() { clearInterval(interval); running = false; }
-    
-    function stopTimer() { 
-      clearInterval(interval); 
-      running = false; 
-      remaining = TOTAL; 
-      document.getElementById('display').textContent = fmt(remaining); 
+
+    function stopTimer() {
+      clearInterval(interval);
+      running = false;
+      remaining = TOTAL;
+      document.getElementById('display').textContent = fmt(remaining);
     }
 
     init();
